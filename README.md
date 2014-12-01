@@ -1,4 +1,4 @@
 Mailmachine-hs
 ===========
 
-Haskell client library for my mailmachine daemon.
+Haskell client library for my [mailmachine](https://github.com/paluh/mailmachine) daemon.
