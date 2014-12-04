@@ -17,7 +17,9 @@ data MailMachineConfig = MailMachineConfig
     , receivers :: ReceiversAddresses
     }
 
-mailMachineHandler :: MailQueue -> Subject -> FromAddress -> ReceiversAddresses -> Priority -> IO (GenericHandler MailMachineConfig)
+type MailMachineHandler = GenericHandler MailMachineConfig
+
+mailMachineHandler :: MailQueue -> Subject -> FromAddress -> ReceiversAddresses -> Priority -> IO MailMachineHandler
 mailMachineHandler mq s f r p = do
     let myWriteFunc mmc msg = do
             _ <- enqueue
