@@ -14,12 +14,14 @@ extra-source-files:  README.md
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     MailMachine
+  exposed-modules:     MailMachine,
+                       System.Log.Handler.MailMachine
   -- other-modules:
   -- other-extensions:
   build-depends:       aeson,
                        base,
                        bytestring,
+                       hslogger,
                        mime-mail,
                        hedis,
                        text
