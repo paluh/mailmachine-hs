@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module System.Log.Handler.MailMachine where
 
+import Control.Exception (SomeException, catchJust)
 import Data.Text as T
 import System.Log (Priority)
 import System.Log.Handler.Simple
@@ -19,17 +20,36 @@ data MailMachineConfig = MailMachineConfig
 
 type MailMachineHandler = GenericHandler MailMachineConfig
 
-mailMachineHandler :: MailQueue -> Subject -> FromAddress -> ReceiversAddresses -> Priority -> IO MailMachineHandler
-mailMachineHandler mq s f r p = do
+type SwallowInternalMailMachineExceptions = Bool
+
+mailMachineHandler :: MailQueue ->
+                      Subject ->
+                      FromAddress ->
+                      ReceiversAddresses ->
+                      Priority ->
+                      SwallowInternalMailMachineExceptions ->
+                      IO MailMachineHandler
+mailMachineHandler mq s f r p sw = do
     let myWriteFunc mmc msg = do
-            _ <- enqueue
-                     (mailQueue mmc)
-                     (from mmc)
-                     (receivers mmc)
-                     (subject mmc)
-                     (T.pack msg)
-                     (T.pack msg)
-            return ()
+            let enqueue_ = do
+                    _ <- enqueue
+                             (mailQueue mmc)
+                             (from mmc)
+                             (receivers mmc)
+                             (subject mmc)
+                             (T.pack msg)
+                             (T.pack msg)
+                    return ()
+            -- in general it's "better" to swallow this
+            -- particular handler exception (redis connection problem etc.)
+            -- and allow other hanlders to still work and log informations
+            catchJust
+                ((\_ ->
+                      if sw
+                          then Just ()
+                          else Nothing)::(SomeException -> Maybe ()))
+                (enqueue_)
+                (const . return $ ())
     return
         GenericHandler {priority =
                                 p
